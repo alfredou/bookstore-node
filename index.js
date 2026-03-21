@@ -1,21 +1,30 @@
 require('dotenv').config();
-const mongoose = require('mongoose')
+const connect = require('./db.js');
 const express = require('express')
 const app = express()
 const cors = require('cors')
 const verifyToken = require('./middlewares/verifyToken')
 const cookieParser = require('cookie-parser')
 const bodyParser = require('body-parser'); // Agrega body-parser
+const limiter = require('./utils/rateLimit.js')
+
 //const {sendMail} = require('./Routes/email')
 //app.use(express.json())
 //añadido de comentario útil del video
+
+/**mejorar el backend para mañana hacer implementación de paypal si da tiempo, y también la de enviar correos esto para el formulario de contacto y la newsletter y las validaciones y demas
+ * usar vscode si no funciona la IA
+ * ver que otras cosas puedo tocar
+*/
+app.use(limiter)
+
 app.use((req, res, next) => {
-    res.setHeader('Access-Control-Allow-Origin', `https://bookstore-azure-gamma.vercel.app`);
+    res.setHeader('Access-Control-Allow-Origin', process.env.CLIENT_URL);
     res.setHeader('Access-Control-Allow-Credentials', 'true');
     next();
-  });
+});
 
-app.use(cors({ origin: `https://bookstore-azure-gamma.vercel.app`}))
+app.use(cors({ origin: process.env.CLIENT_URL }))
 app.use(cookieParser())
 //app.use(cors())
 
@@ -28,41 +37,29 @@ app.use(
     })
 );
 
-  
+
 
 const userRouter = require('./Routes/user')
 const router = require('./Routes/auth')
 const stripe = require('./Routes/stripe')
+const paypal = require('./Routes/paypal')
 const commentRouter = require('./Routes/comment')
 
-const connect = async () => {
-    try {
-        await mongoose.connect(process.env.MONGO);
-        console.log('connected to mongodb')
-    } catch (error) {
-        throw error
-    }
-}
-mongoose.connection.on("disconected", () => {
-    console.log("mongodb disconected")
-})
-mongoose.connection.on("connected", () => {
-    console.log("mongodb connected")
-})
 
 app.get("/", (req, res) => {
     res.send("hello world")
 })
 app.get('/api/logout', verifyToken, async (req, res) => {
-    try{
+    try {
         res.clearCookie('access_token', { httpOnly: true });
         res.send('Sesión cerrada');
-    }catch(e){
-        res.send({message: e})
+    } catch (e) {
+        res.send({ message: e })
     }
-    });
+});
+
 app.use("/api/auth", router)
-app.use("/api/user", verifyToken, userRouter)  
+app.use("/api/user", verifyToken, userRouter)
 app.use("/api/comment", commentRouter)
 /*
 app.use(bodyParser.json({
@@ -74,9 +71,10 @@ app.use(bodyParser.json({
         }
     }}));
 */
-app.use("/api/stripe", stripe)
+app.use("/api/stripe", verifyToken, stripe)
+app.use("/api/paypal", paypal)
 
-app.get("/item", verifyToken, (req, res)=>{
+app.get("/item", verifyToken, (req, res) => {
     res.send("<h1>Tienes acceso</h1>")
 })
 app.use((err, req, res, next) => {

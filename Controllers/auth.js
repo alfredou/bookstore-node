@@ -5,20 +5,34 @@ const createError = require('../utils/error')
 
 const register = async (req, res, next) => {
     try {
-        const salt = bcrypt.genSaltSync(10)
-        const hash = bcrypt.hashSync(req.body.password, salt)
+        const { username, email, password } = req.body;
+
+        // Check if username already exists
+        const existingUsername = await User.findOne({ username });
+        if (existingUsername) {
+            return next(createError(400, "This username is already in use!"));
+        }
+
+        // Check if email already exists
+        const existingEmail = await User.findOne({ email });
+        if (existingEmail) {
+            return next(createError(400, "This email is already in use!"));
+        }
+
+        const salt = bcrypt.genSaltSync(10);
+        const hash = bcrypt.hashSync(password, salt);
 
         const newUser = new User({
-            username: req.body.username,
-            email: req.body.email,
+            username,
+            email,
             password: hash
-        })
+        });
 
-        await newUser.save()
-        res.status(200).send("User has been created")
+        await newUser.save();
+        res.status(200).send("User has been created");
 
     } catch (e) {
-        next(e)
+        next(e);
     }
 }
 const login = async (req, res, next) => {
@@ -45,4 +59,4 @@ const login = async (req, res, next) => {
 }
 
 
-module.exports = { register, login}
+module.exports = { register, login }

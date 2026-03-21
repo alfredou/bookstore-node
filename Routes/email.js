@@ -1,36 +1,28 @@
-//para mañana deployar front en vercel y agregarle lo que falta estructura de carpetas a este en los componentes antes de deployarlo o deployarlo asi como esta y luego agregar el websocket en stripe y integrar el dominio de email con sus dns etc. para mañana debe estar terminado.
-//const { Resend } = require('resend');
-//const { generateEmailHTML } = require('../utils/generateHtml')
 /*
-to='user@gmail.com'
-const products = [
-     {
-        id: "9781912047451",
-        title: "An Introduction to C & GUI Programming, 2nd Edition",
-        quantity: 1,
-        image: "https://itbook.store/img/books/9781912047451.png",
-        price: 14.92
-    }
-  ];
-  */
-//const resend = new Resend(process.env.MAIL_KEY);
-/*
-async function sendMail(to, products) {
-  try {
-    const emailHTML = generateEmailHTML(products)
+const express = require('express');
+const router = express.Router();
+const { generateEmailHTML } = require('../utils/generateHtml')
+import { Resend } from 'resend';
 
-    if(emailHTML){
-    const data = await resend.emails.send({
-            from: 'onboarding@resend.dev',
-            to: [`${to}`],
-            subject: 'You have bought',
-            html: emailHTML,
-           });
-    console.log(data);
-   }
- } catch (error) {
-    console.error(error);
+const resend = new Resend(process.env.RESEND_KEY);
+//me permite enviar a mi correo unico verificado es decir tendre que usarlo para el formulario de newsletter y contacto
+router.post('/send-email', async (req, res) => {
+  const { to, subject, htmlContent } = req.body;
+
+(async function () {
+  const { data, error } = await resend.emails.send({
+    from: 'Acme <onboarding@resend.dev>',
+    to: [`${to}`],
+    subject: `${subject}`,
+    html: `${htmlContent}`,
+  });
+
+  if (error) {
+    return console.error({ error });
   }
-}
 
-module.exports = {sendMail}*/
+  console.log({ data });  
+})();
+});
+
+module.exports = router;*/
