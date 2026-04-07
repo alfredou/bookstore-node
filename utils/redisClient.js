@@ -1,32 +1,41 @@
 const { createClient } = require('redis');
 
-// Usamos REDIS_URL para servicios en la nube (como Upstash o Render),
-// y localhost como puerto predeterminado si es local.
-const redisClient = createClient({
-    url: process.env.REDIS_URL || 'redis://127.0.0.1:6379'
-});
+let client;
 
-let isConnected = false;
-
-redisClient.on('error', (err) => {
-    // Si falla la conexion (por ejemplo, el usuario no tiene redis instalado),
-    // no crasheamos el servidor, solo avisamos y deshabilitamos el caché.
-    if (isConnected) {
-        console.error('Redis Connection Error:', err.message);
+/**
+ * Singleton para obtener el cliente de Redis. 
+ * Reutiliza la conexión entre invocaciones de AWS Lambda.
+ */
+const getRedisClient = async () => {
+    // Si no hay URL de Redis configurada, no intentamos conectar
+    if (!process.env.REDIS_URL) {
+        return null;
     }
-});
 
-redisClient.on('connect', () => {
-    console.log('Successfully connected to Redis!');
-    isConnected = true;
-});
+    if (!client) {
+        try {
+            client = createClient({
+                url: process.env.REDIS_URL,
+                socket: {
+                    tls: true, // Requerido para Upstash/Redis Cloud en Lambda
+                    rejectUnauthorized: false
+                }
+            });
 
-// Intentamos conectar silenciosamente
-redisClient.connect().catch(() => {
-    console.log('Failed to connect to Redis. Running without cache.');
-});
+            client.on('error', (err) => {
+                console.error('Redis Client Error:', err);
+                client = null; // Reiniciamos el cliente si hay un error fatal
+            });
 
-// Función asistente amigable para comprobar si podemos usar Redis
-const isCacheConnected = () => isConnected && redisClient.isOpen;
+            await client.connect();
+            console.log('Redis connected successfully (Singleton)');
+        } catch (err) {
+            console.error('Failed to connect to Redis:', err.message);
+            client = null;
+            return null;
+        }
+    }
+    return client;
+};
 
-module.exports = { redisClient, isCacheConnected };
+module.exports = getRedisClient;

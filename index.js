@@ -7,6 +7,7 @@ const verifyToken = require('./middlewares/verifyToken')
 const cookieParser = require('cookie-parser')
 const bodyParser = require('body-parser'); // Agrega body-parser
 const limiter = require('./utils/rateLimit.js')
+const serverless = require('serverless-http'); // Importamos serverless-http
 
 //const {sendMail} = require('./Routes/email')
 //app.use(express.json())
@@ -42,7 +43,7 @@ app.use(
 const userRouter = require('./Routes/user')
 const router = require('./Routes/auth')
 const stripe = require('./Routes/stripe')
-const paypal = require('./Routes/paypal')
+//const paypal = require('./Routes/paypal')
 const commentRouter = require('./Routes/comment')
 
 
@@ -72,7 +73,7 @@ app.use(bodyParser.json({
     }}));
 */
 app.use("/api/stripe", verifyToken, stripe)
-app.use("/api/paypal", paypal)
+//app.use("/api/paypal", paypal)
 
 app.get("/item", verifyToken, (req, res) => {
     res.send("<h1>Tienes acceso</h1>")
@@ -88,8 +89,17 @@ app.use((err, req, res, next) => {
         stack: err.stack //explica el error con mas detalle
     })
 })
-const PORT = process.env.PORT || 3000
-const server = app.listen(PORT, () => {
-    connect()
-    console.log(`Server running on port ${process.env.PORT}`)
-})
+// Exportamos el handler para AWS Lambda
+module.exports.handler = serverless(app);
+
+// Solo escuchamos en un puerto si no estamos en AWS Lambda (es decir, localmente)
+if (!process.env.LAMBDA_TASK_ROOT) {
+    const PORT = process.env.PORT || 3001;
+    app.listen(PORT, () => {
+        connect();
+        console.log(`Server running locally on port ${PORT}`);
+    });
+} else {
+    // En Lambda, conectamos a la DB al iniciar la función
+    connect();
+}

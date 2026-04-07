@@ -1,15 +1,16 @@
 const { Comment } = require('../Models/Comment')
 const User = require('../Models/User')
-const { redisClient, isCacheConnected } = require('../utils/redisClient')
+const getRedisClient = require('../utils/redisClient') // Nueva importación del singleton
 
 const getComments = async (req, res, next) => {
     const id = req.params.id
     
     try {
         // --- REDIS CACHE CHECK ---
-        if (isCacheConnected()) {
+        const redis = await getRedisClient();
+        if (redis) {
             try {
-                const cachedComments = await redisClient.get(`comments:${id}`);
+                const cachedComments = await redis.get(`comments:${id}`);
                 if (cachedComments) {
                     return res.status(200).json(JSON.parse(cachedComments));
                 }
@@ -33,9 +34,9 @@ const getComments = async (req, res, next) => {
         const responseData = { comments, productRating };
         
         // --- REDIS CACHE SAVE ---
-        if (isCacheConnected()) {
+        if (redis) {
             try {
-                await redisClient.setEx(`comments:${id}`, 3600, JSON.stringify(responseData));
+                await redis.setEx(`comments:${id}`, 3600, JSON.stringify(responseData));
             } catch (cacheErr) {
                 console.log("Redis save error:", cacheErr.message);
             }
@@ -66,9 +67,10 @@ const sendComment = async (req, res, next) => {
         await user.save();
 
         // --- REDIS CACHE INVALIDATION ---
-        if (isCacheConnected()) {
+        const redis = await getRedisClient();
+        if (redis) {
             try {
-                await redisClient.del(`comments:${bookisbn}`);
+                await redis.del(`comments:${bookisbn}`);
             } catch (cacheErr) {
                 console.log("Redis delete error:", cacheErr.message);
             }

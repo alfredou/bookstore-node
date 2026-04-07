@@ -1,0 +1,34 @@
+service: bookstore-backend
+
+provider:
+  name: aws
+  runtime: nodejs18.x
+  region: us-east-1 # Cambia esto si prefieres otra region
+  environment:
+    # Mapeamos las variables de entorno para que se lean de AWS SSM Parameter Store
+    # Esto es mucho más seguro para un portfolio profesional
+    MONGO: ${ssm:/bookstore/mongo}
+    CLIENT_URL: ${ssm:/bookstore/client-url}
+    STRIPE_KEY: ${ssm:/bookstore/stripe-key}
+    ENDPOINT_SECRET: ${ssm:/bookstore/stripe-webhook-secret}
+    REDIS_URL: ${ssm:/bookstore/redis-url}
+    EASYPOST_API_KEY: ${ssm:/bookstore/easypost-key}
+    JWT_SECRET: ${ssm:/bookstore/jwt-secret}
+
+functions:
+  api:
+    handler: index.handler
+    events:
+      - httpApi:
+          path: /{proxy+}
+          method: any
+
+plugins:
+  - serverless-offline
+
+package:
+  patterns:
+    - '!node_modules/serverless-offline/**'
+    - '!node_modules/serverless/**'
+    - '!.git/**'
+    - '!.github/**'
