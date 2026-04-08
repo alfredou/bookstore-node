@@ -28,7 +28,7 @@ app.use((req, res, next) => {
     next();
 });
 
-app.use(cors({ 
+app.use(cors({
     origin: process.env.CLIENT_URL,
     credentials: true,
     allowedHeaders: ['Content-Type', 'Authorization', 'x-client-source']
@@ -107,7 +107,7 @@ if (!process.env.LAMBDA_TASK_ROOT && process.env.NODE_ENV !== 'test') {
         connect();
         console.log(`Server running locally on port ${PORT}`);
     });
-} else {
+} else if (process.env.LAMBDA_TASK_ROOT) {
     // En Lambda, conectamos a la DB al iniciar la función
     connect();
 }
