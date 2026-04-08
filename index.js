@@ -8,7 +8,8 @@ const cookieParser = require('cookie-parser')
 const bodyParser = require('body-parser'); // Agrega body-parser
 const limiter = require('./utils/rateLimit.js')
 const serverless = require('serverless-http'); // Importamos serverless-http
-
+const helmet = require('helmet'); // Capa de seguridad HTTP
+const mongoSanitize = require('express-mongo-sanitize'); // Prevenir NoSQL Injection
 //const {sendMail} = require('./Routes/email')
 //app.use(express.json())
 //añadido de comentario útil del video
@@ -18,6 +19,8 @@ const serverless = require('serverless-http'); // Importamos serverless-http
  * ver que otras cosas puedo tocar
 */
 app.use(limiter)
+app.use(helmet()) // Activa todas las protecciones HTTP de Helmet
+app.use(mongoSanitize()) // Limpia los inputs contra Inyecciones de Mongo
 
 app.use((req, res, next) => {
     res.setHeader('Access-Control-Allow-Origin', process.env.CLIENT_URL);
@@ -25,7 +28,11 @@ app.use((req, res, next) => {
     next();
 });
 
-app.use(cors({ origin: process.env.CLIENT_URL }))
+app.use(cors({ 
+    origin: process.env.CLIENT_URL,
+    credentials: true,
+    allowedHeaders: ['Content-Type', 'Authorization', 'x-client-source']
+}))
 app.use(cookieParser())
 //app.use(cors())
 
@@ -89,11 +96,12 @@ app.use((err, req, res, next) => {
         stack: err.stack //explica el error con mas detalle
     })
 })
-// Exportamos el handler para AWS Lambda
+// Exportamos el handler para AWS Lambda y la app para testing (supertest)
 module.exports.handler = serverless(app);
+module.exports.app = app;
 
-// Solo escuchamos en un puerto si no estamos en AWS Lambda (es decir, localmente)
-if (!process.env.LAMBDA_TASK_ROOT) {
+// Solo escuchamos en un puerto si no estamos en AWS Lambda (es decir, localmente) y no estamos en un test
+if (!process.env.LAMBDA_TASK_ROOT && process.env.NODE_ENV !== 'test') {
     const PORT = process.env.PORT || 3001;
     app.listen(PORT, () => {
         connect();

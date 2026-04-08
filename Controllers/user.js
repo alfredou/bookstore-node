@@ -19,6 +19,18 @@ const updateUser = async (req, res, next) => {
         }
 
         if (req.body.password !== '' && req.body.password !== null && req.body.password !== undefined) {
+            // Require oldPassword for security
+            if (!req.body.oldPassword) {
+                return next(createError(400, "Debes ingresar tu contraseña actual para establecer una nueva."));
+            }
+
+            // Verify oldPassword
+            const isPasswordCorrect = await bcrypt.compare(req.body.oldPassword, user.password);
+            if (!isPasswordCorrect) {
+                return next(createError(400, "La contraseña actual es incorrecta."));
+            }
+
+            // Hash the new password
             const salt = bcrypt.genSaltSync(10);
             const hash = bcrypt.hashSync(req.body.password, salt);
             updateUser.password = hash;

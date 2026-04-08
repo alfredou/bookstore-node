@@ -29,6 +29,9 @@ jobs:
       - name: Install dependencies
         run: npm install
 
+      - name: Run Tests (Unit & Integration)
+        run: npm run test
+
       - name: Serverless Deploy
         uses: serverless/github-action@v3.2
         with:

@@ -1,6 +1,12 @@
 const jwt = require('jsonwebtoken');
 
 const verifyToken = (req, res, next) => {
+  // Verificación secundaria para prevenir CSRF: Validar que la petición venga estrictamente de la UI en React.
+  const clientSource = req.headers['x-client-source'];
+  if (clientSource !== 'bookstore-react-app') {
+    return res.status(403).json({ message: 'CSRF Validation failed. Access forbidden.' });
+  }
+
   // Obtener el token de autenticación de la cookie
   const token = req.cookies.access_token;
   //console.log("token", token)
