@@ -107,7 +107,7 @@ if (!process.env.LAMBDA_TASK_ROOT && process.env.NODE_ENV !== 'test') {
         connect();
         console.log(`Server running locally on port ${PORT}`);
     });
-} else if (process.env.LAMBDA_TASK_ROOT) {
+} else if (process.env.LAMBDA_TASK_ROOT && process.env.NODE_ENV !== 'test') {
     // En Lambda, conectamos a la DB al iniciar la función
     connect();
 }

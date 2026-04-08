@@ -33,6 +33,11 @@ jobs:
 
       - name: Run Tests (Unit & Integration)
         run: npm run test
+        env:
+          STRIPE_KEY: sk_test_dummy123
+          JWT: jwt_secret_dummy
+          CLIENT_URL: http://localhost:3000
+          MONGO: mongodb://dummy
 
       - name: Serverless Deploy
         uses: serverless/github-action@v3.2

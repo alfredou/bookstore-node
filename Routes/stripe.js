@@ -3,7 +3,7 @@ const Order = require("../Models/Order")
 const User = require("../Models/User")
 require('dotenv').config()
 const router2 = express.Router()
-const stripe = require('stripe')(process.env.STRIPE_KEY)
+const stripe = require('stripe')(process.env.STRIPE_KEY || 'sk_test_dummy_key_for_testing');
 const NewPrice = require('../newPrice')
 const { sendMail } = require('../Routes/email')
 const getRedisClient = require('../utils/redisClient'); // Singleton
