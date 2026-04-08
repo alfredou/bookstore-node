@@ -22,14 +22,16 @@ app.use(limiter)
 app.use(helmet()) // Activa todas las protecciones HTTP de Helmet
 app.use(mongoSanitize()) // Limpia los inputs contra Inyecciones de Mongo
 
+const clientOrigin = process.env.CLIENT_URL ? process.env.CLIENT_URL.replace(/\/$/, '') : '';
+
 app.use((req, res, next) => {
-    res.setHeader('Access-Control-Allow-Origin', process.env.CLIENT_URL);
+    res.setHeader('Access-Control-Allow-Origin', clientOrigin);
     res.setHeader('Access-Control-Allow-Credentials', 'true');
     next();
 });
 
 app.use(cors({
-    origin: process.env.CLIENT_URL,
+    origin: clientOrigin,
     credentials: true,
     allowedHeaders: ['Content-Type', 'Authorization', 'x-client-source']
 }))
