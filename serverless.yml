@@ -13,7 +13,7 @@ provider:
     ENDPOINT_SECRET: ${ssm:/bookstore/stripe-webhook-secret}
     REDIS_URL: ${ssm:/bookstore/redis-url}
     EASYPOST_API_KEY: ${ssm:/bookstore/easypost-key}
-    JWT_SECRET: ${ssm:/bookstore/jwt-secret}
+    JWT: ${ssm:/bookstore/jwt-secret}
 
 functions:
   api:
