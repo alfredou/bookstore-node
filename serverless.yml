@@ -2,7 +2,7 @@ service: bookstore-backend
 
 provider:
   name: aws
-  runtime: nodejs20.x
+  runtime: nodejs22.x
   region: us-east-1 # Cambia esto si prefieres otra region
   environment:
     # Mapeamos las variables de entorno para que se lean de AWS SSM Parameter Store
